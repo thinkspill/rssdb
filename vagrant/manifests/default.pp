@@ -25,10 +25,10 @@ file { '/laravel_app_storage':
 
 exec {'copy over storage dirs':
   command => '/bin/cp -Rp /home/vagrant/laravel/app/storage/* /laravel_app_storage/',
-  require => File['/laravel_app_storage'],
+  require => [ Exec['create laravel project'], File['/laravel_app_storage'] ],
   user => 'vagrant',
   creates => '/laravel_app_storage/cache',
-  require => Exec['create laravel project'],
+
 }
 
 exec {'chmod storage dirs':
