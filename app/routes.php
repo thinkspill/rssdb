@@ -49,29 +49,31 @@ Route::get(
             'chevrolet equinox',
             'kia sportage',
             'ford explorer',
+            'ford edge',
             'kia sorento',
-            'hyundai veracruz'
+            'hyundai veracruz',
+            'hyundai tucson',
+            'mazda cx-9',
+            'toyota 4runner',
+            'mercedes ML350',
+            'subaru outback',
+
         );
         foreach ($regions as $region) {
             foreach ($searches as $search) {
                 $search = urlencode($search);
-                echo(get_rss_title(
-                    'http://' . $region . '.craigslist.org/search/cta?catAbb=cto&query=' . $search . '&sort=priceasc&srchType=T&format=rss'
-                ));
+                echo(get_rss_title($region, $search));
             }
 
         }
 
-//        echo(get_rss_title('http://sfbay.craigslist.org/search/sss?catAbb=cto&query=ford%20escape%20hybrid&srchType=A&format=rss'));
-//        echo(get_rss_title('http://losangeles.craigslist.org/search/sss?catAbb=cto&query=ford%20escape%20hybrid&srchType=A&format=rss'));
-//        echo(get_rss_title('http://reno.craigslist.org/search/cta?query=ford%20escape%20hybrid&srchType=T&format=rss'));
-//        echo(get_rss_title('http://reno.craigslist.org/search/cta?query=honda%20cr-v&srchType=T&format=rss'));
         return ob_get_clean();
     }
 );
 
-function get_rss_title($feed_url)
+function get_rss_title($region, $search)
 {
+    $feed_url = 'http://' . $region . '.craigslist.org/search/cta?catAbb=cto&query=' . $search . '&sort=priceasc&srchType=T&format=rss';
     ob_start();
     $p = new SimplePie();
     $p->set_feed_url($feed_url);
@@ -86,6 +88,9 @@ function get_rss_title($feed_url)
         $listing->price = (int) trim(get_price($item->get_title()), '$');
         $listing->url = $item->get_link();
         $listing->date = date('Y-m-d', strtotime($item->get_date()));
+        $listing->region = $region;
+        $listing->search = urldecode($search);
+        $listing->body = $item->get_content();
 
         var_dump($listing['attributes']);
 
