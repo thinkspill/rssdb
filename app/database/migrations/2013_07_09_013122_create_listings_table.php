@@ -20,7 +20,11 @@ class CreateListingsTable extends Migration {
 			$table->integer('year');
 			$table->date('date');
 			$table->string('url');
+			$table->string('region');
+			$table->string('search');
             $table->timestamps();
+
+
         });
     }
 

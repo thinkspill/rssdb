@@ -57,6 +57,9 @@ Route::get(
             'toyota 4runner',
             'mercedes ML350',
             'subaru outback',
+            'prius v',
+            'ford flex',
+            'mazda 5',
 
         );
         foreach ($regions as $region) {
@@ -64,7 +67,6 @@ Route::get(
                 $search = urlencode($search);
                 echo(get_rss_title($region, $search));
             }
-
         }
 
         return ob_get_clean();
@@ -84,18 +86,22 @@ function get_rss_title($region, $search)
 
         $listing = new Listing;
         $listing->title = $item->get_title();
-        $listing->year = (int) get_year($item->get_title());
-        $listing->price = (int) trim(get_price($item->get_title()), '$');
+        $listing->year = (int)get_year($item->get_title());
+        $listing->price = (int)trim(get_price($item->get_title()), '$');
         $listing->url = $item->get_link();
         $listing->date = date('Y-m-d', strtotime($item->get_date()));
         $listing->region = $region;
         $listing->search = urldecode($search);
+        if (is_null($listing->mileage = get_mileage($item->get_title())))
+        {
+            $listing->mileage = get_mileage($item->get_content());
+        }
         $listing->body = $item->get_content();
+        $listing->awd = get_awd($item->get_title() . " " . $item->get_content());
 
         var_dump($listing['attributes']);
 
-        if ($listing->price == 0 || $listing->price < 5000)
-        {
+        if ($listing->price == 0 || $listing->price < 5000) {
             continue;
         }
 
@@ -149,5 +155,41 @@ function enforce_model_in_title($model, $title)
     }
 }
 
+function get_mileage($title)
+{
+    $title = str_ireplace('xxx', '000', $title); # people say 20,xxx miles, change that to 20,000
+    $title = str_replace(',', '', $title); # change 20,000 to 20000
+    $title = preg_replace('/\$\d{2,6}/', '', $title); # remove any prices
+    $title = str_ireplace('k ', '000 ', $title); # remove any prices
+    preg_match_all('/\d{5,6}/', $title, $matches);
+    if (count($matches)) {
+        foreach ($matches[0] as $match)
+        {
+            if ($match > 10000 && $match < 300000)
+            {
+                return $match;
+            }
+        }
+
+    }
+    return null;
+}
+
+function get_awd($string)
+{
+    if (stripos($string, 'awd') !== false)
+    {
+        return 1;
+    }
+    elseif (stripos($string, '4wd') !== false)
+    {
+        return 1;
+    }
+    elseif (stripos($string, '4x4') !== false)
+    {
+        return 1;
+    }
+    return 0;
+}
 
 Route::resource('listings', 'ListingsController');

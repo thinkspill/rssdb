@@ -3,13 +3,27 @@
 class ListingsController extends BaseController {
 
     /**
+     * Listing Repository
+     *
+     * @var Listing
+     */
+    protected $listing;
+
+    public function __construct(Listing $listing)
+    {
+        $this->listing = $listing;
+    }
+
+    /**
      * Display a listing of the resource.
      *
      * @return Response
      */
     public function index()
     {
-        return View::make('listings/index');
+        $listings = $this->listing->all();
+
+        return View::make('listings.index', compact('listings'));
     }
 
     /**
@@ -19,7 +33,7 @@ class ListingsController extends BaseController {
      */
     public function create()
     {
-        //
+        return View::make('listings.create');
     }
 
     /**
@@ -29,7 +43,20 @@ class ListingsController extends BaseController {
      */
     public function store()
     {
-        //
+        $input = Input::all();
+        $validation = Validator::make($input, Listing::$rules);
+
+        if ($validation->passes())
+        {
+            $this->listing->create($input);
+
+            return Redirect::route('listings.index');
+        }
+
+        return Redirect::route('listings.create')
+            ->withInput()
+            ->withErrors($validation)
+            ->with('message', 'There were validation errors.');
     }
 
     /**
@@ -40,7 +67,9 @@ class ListingsController extends BaseController {
      */
     public function show($id)
     {
-        //
+        $listing = $this->listing->findOrFail($id);
+
+        return View::make('listings.show', compact('listing'));
     }
 
     /**
@@ -51,7 +80,14 @@ class ListingsController extends BaseController {
      */
     public function edit($id)
     {
-        //
+        $listing = $this->listing->find($id);
+
+        if (is_null($listing))
+        {
+            return Redirect::route('listings.index');
+        }
+
+        return View::make('listings.edit', compact('listing'));
     }
 
     /**
@@ -62,7 +98,21 @@ class ListingsController extends BaseController {
      */
     public function update($id)
     {
-        //
+        $input = array_except(Input::all(), '_method');
+        $validation = Validator::make($input, Listing::$rules);
+
+        if ($validation->passes())
+        {
+            $listing = $this->listing->find($id);
+            $listing->update($input);
+
+            return Redirect::route('listings.show', $id);
+        }
+
+        return Redirect::route('listings.edit', $id)
+            ->withInput()
+            ->withErrors($validation)
+            ->with('message', 'There were validation errors.');
     }
 
     /**
@@ -73,7 +123,9 @@ class ListingsController extends BaseController {
      */
     public function destroy($id)
     {
-        //
+        $this->listing->find($id)->delete();
+
+        return Redirect::route('listings.index');
     }
 
 }
