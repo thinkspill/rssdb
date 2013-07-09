@@ -28,6 +28,7 @@ exec {'copy over storage dirs':
   require => File['/laravel_app_storage'],
   user => 'vagrant',
   creates => '/laravel_app_storage/cache',
+  require => Exec['create laravel project'],
 }
 
 exec {'chmod storage dirs':
