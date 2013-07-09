@@ -15,9 +15,57 @@ Route::get(
     '/',
     function () {
         ob_start();
-        echo(get_rss_title('http://sacramento.craigslist.org/search/cta?catAbb=cto&query=ford%20escape%20hybrid&sort=priceasc&srchType=T&format=rss'));
-        echo(get_rss_title('http://sfbay.craigslist.org/search/sss?catAbb=cto&query=ford%20escape%20hybrid&srchType=A&format=rss'));
-        echo(get_rss_title('http://losangeles.craigslist.org/search/sss?catAbb=cto&query=ford%20escape%20hybrid&srchType=A&format=rss'));
+        $regions = array(
+            'sacramento',
+            'sfbay',
+            'losangeles',
+            'reno',
+            'goldcountry',
+            'humboldt',
+            'mendocino',
+            'chico',
+            'fresno',
+            'hanford',
+            'portland',
+            'yubasutter',
+            'visalia',
+            'susanville',
+            'stockton',
+            'slo',
+            'bakersfield',
+            'lasvegas',
+            'inlandempire',
+            'orangecounty',
+            'palmsprings',
+            'sandiego',
+            'santabarbara'
+        );
+        $searches = array(
+            'ford escape hybrid',
+            'honda cr-v',
+            'toyota highlander',
+            'subaru forester',
+            'toyota rav4',
+            'chevrolet equinox',
+            'kia sportage',
+            'ford explorer',
+            'kia sorento',
+            'hyundai veracruz'
+        );
+        foreach ($regions as $region) {
+            foreach ($searches as $search) {
+                $search = urlencode($search);
+                echo(get_rss_title(
+                    'http://' . $region . '.craigslist.org/search/cta?catAbb=cto&query=' . $search . '&sort=priceasc&srchType=T&format=rss'
+                ));
+            }
+
+        }
+
+//        echo(get_rss_title('http://sfbay.craigslist.org/search/sss?catAbb=cto&query=ford%20escape%20hybrid&srchType=A&format=rss'));
+//        echo(get_rss_title('http://losangeles.craigslist.org/search/sss?catAbb=cto&query=ford%20escape%20hybrid&srchType=A&format=rss'));
+//        echo(get_rss_title('http://reno.craigslist.org/search/cta?query=ford%20escape%20hybrid&srchType=T&format=rss'));
+//        echo(get_rss_title('http://reno.craigslist.org/search/cta?query=honda%20cr-v&srchType=T&format=rss'));
         return ob_get_clean();
     }
 );
@@ -31,18 +79,34 @@ function get_rss_title($feed_url)
     $p->init();
 
     foreach ($p->get_items() as $item) {
-//        var_dump(enforce_model_in_title('escape', $item->get_title()));
-        if (enforce_model_in_title('escape', $item->get_title())) {
-            var_dump($item->get_title());
 
-            var_dump(get_year($item->get_title()));
-            var_dump(get_price($item->get_title()));
-            echo '<hr>';
+        $listing = new Listing;
+        $listing->title = $item->get_title();
+        $listing->year = (int) get_year($item->get_title());
+        $listing->price = (int) trim(get_price($item->get_title()), '$');
+        $listing->url = $item->get_link();
+        $listing->date = date('Y-m-d', strtotime($item->get_date()));
+
+        var_dump($listing['attributes']);
+
+        if ($listing->price == 0 || $listing->price < 5000)
+        {
+            continue;
         }
+
+        try {
+            $listing->save();
+        } catch (Exception $e) {
+
+        }
+
+        echo '<hr>';
+
     }
 
     return ob_get_clean();
 }
+
 
 function get_year($string)
 {
@@ -79,3 +143,6 @@ function enforce_model_in_title($model, $title)
         return true;
     }
 }
+
+
+Route::resource('listings', 'ListingsController');
